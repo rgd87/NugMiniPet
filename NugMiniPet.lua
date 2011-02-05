@@ -12,6 +12,7 @@ BINDING_HEADER_NUGMINIPET = "NugMiniPet"
 local id_now
 local lastCall
 local pet_indices = {}
+local initalized = false
 function NugMiniPet.ADDON_LOADED(self,event,arg1)
     if arg1 == "NugMiniPet" then
         NugMiniPetDB = NugMiniPetDB or {}
@@ -22,8 +23,7 @@ function NugMiniPet.ADDON_LOADED(self,event,arg1)
         lastCall = GetTime()
         
         NugMiniPet:RegisterEvent("COMPANION_LEARNED")
-        NugMiniPet:RegisterEvent("PLAYER_LOGIN")
-        NugMiniPet.PLAYER_LOGIN = NugMiniPet.COMPANION_LEARNED
+        NugMiniPet.COMPANION_LEARNED = NugMiniPet.Initialize
         
         --PURGING OLD DB OF PETS
         if not NugMiniPetDB.DB_VERSION or NugMiniPetDB.DB_VERSION ~= DB_VERSION then
@@ -90,6 +90,7 @@ function NugMiniPet.Summon()
         if lastCall + NugMiniPetDB.timer * 60 < GetTime() then timerExpired = true end
     end
     if not active or timerExpired then
+        if not initalized then NugMiniPet:Initialize() end
         local id = NugMiniPet:Shuffle()
         if id
             and (lastCall+1.5 < GetTime()) and not UnitAffectingCombat("player")
@@ -103,6 +104,7 @@ function NugMiniPet.Summon()
 end
 
 function NugMiniPet.SimpleSummon()
+    if not initalized then NugMiniPet:Initialize() end
     local id = NugMiniPet:Shuffle()
     while id_now ~= nil and id == id_now and select(2,NugMiniPet:Shuffle()) > 1 do
         id = NugMiniPet:Shuffle()
@@ -138,7 +140,7 @@ function NugMiniPet.UpdateBorders(self)
     end
 end
 
-function NugMiniPet.COMPANION_LEARNED(self)
+function NugMiniPet.Initialize(self)
     pet_indices = {}
 	for i=1,GetNumCompanions("CRITTER") do
 		local _,_, spellID, _, active = GetCompanionInfo("CRITTER", i)
