@@ -1,0 +1,6 @@
+## Interface: 40000
+## Title: NugMiniPet
+## Notes: Minipet autosummon
+## Author: d87
+## SavedVariablesPerCharacter: NugMiniPetDB
+NugMiniPet.lua
