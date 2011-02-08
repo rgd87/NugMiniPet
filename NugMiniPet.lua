@@ -96,6 +96,8 @@ function NugMiniPet.Summon()
             and (lastCall+1.5 < GetTime()) and not UnitAffectingCombat("player")
             and not IsMounted() and not IsFlying() and not UnitHasVehicleUI("player")
             and not IsStealthed() and not UnitIsGhost("player")
+            and not UnitAura("player",GetSpellInfo(51755),nil,"HELPFUL") -- Camouflage
+            and not UnitAura("player",GetSpellInfo(32612),nil,"HELPFUL") -- Invisibility
         then
             lastCall = GetTime() -- isSummoned seems like not updated instantly so this is a cooldown for next summon
             CallCompanion("CRITTER",id)
