@@ -1,72 +1,53 @@
 NugMiniPet = CreateFrame("Frame","NugMiniPet")
 
 NugMiniPet:SetScript("OnEvent", function(self, event, ...)
-	self[event](self, event, ...)
+	return self[event](self, event, ...)
 end)
 NugMiniPet:RegisterEvent("ADDON_LOADED")
 
-local DB_VERSION = 3
+local DB_VERSION = 4
 
 BINDING_HEADER_NUGMINIPET = "NugMiniPet"
 
-local id_now
 local lastCall
-local pet_indices = {}
+local favoritePetIDs = {}
 local initalized = false
 function NugMiniPet.ADDON_LOADED(self,event,arg1)
     if arg1 == "NugMiniPet" then
         NugMiniPetDB = NugMiniPetDB or {}
-        NugMiniPetDB.pets = NugMiniPetDB.pets or {}
+        --PURGING OLD DB OF PETS
+        if not NugMiniPetDB.DB_VERSION or NugMiniPetDB.DB_VERSION ~= DB_VERSION then
+            table.wipe(NugMiniPetDB)
+            NugMiniPetDB.DB_VERSION = DB_VERSION
+        end
         NugMiniPetDB.timer = NugMiniPetDB.timer or 0
         NugMiniPetDB.enable = (NugMiniPetDB.enable == nil) and true or NugMiniPetDB.enable
         
         lastCall = GetTime()
-        
-        NugMiniPet:RegisterEvent("COMPANION_LEARNED")
-        NugMiniPet.COMPANION_LEARNED = NugMiniPet.Initialize
-        
-        --PURGING OLD DB OF PETS
-        if not NugMiniPetDB.DB_VERSION or NugMiniPetDB.DB_VERSION ~= DB_VERSION then
-            NugMiniPetDB.pets = {}
-            NugMiniPetDB.DB_VERSION = DB_VERSION
-        end
-        
+
+        self:RegisterEvent("PET_JOURNAL_LIST_UPDATE")
+        self.PET_JOURNAL_LIST_UPDATE = self.Initialize
         
         hooksecurefunc("MoveForwardStart",NugMiniPet.Summon)
         hooksecurefunc("ToggleAutoRun",NugMiniPet.Summon)
         
-        hooksecurefunc("CallCompanion",function(compType, id)
-            if compType == "CRITTER" then
-                id_now = id
-                lastCall = GetTime()
-            end
-        end)
-        hooksecurefunc("SpellBookCompanionButton_OnModifiedClick",function(self,button)
-            if SpellBookCompanionsFrame.mode ~= "CRITTER" or not IsControlKeyDown() then return end
-            local cPage,maxPage = SpellBook_GetCurrentPage()
-            local offset = (cPage -1) * NUM_COMPANIONS_PER_PAGE;
-            local index = self:GetID() + offset
-            local creatureID, creatureName, spellID, icon, active = GetCompanionInfo("CRITTER", index)
-            if not NugMiniPetDB.pets[spellID] then
-                NugMiniPetDB.pets[spellID] = true
-                table.insert(pet_indices, index)
-                self.nmpBorder:Show()
-            else
-                NugMiniPetDB.pets[spellID] = nil
-                for i,ind in ipairs(pet_indices) do 
-                    if ind == index then table.remove(pet_indices, i) break end
+    elseif arg1 == "Blizzard_PetJournal" then
+        for i, btn in ipairs(PetJournal.listScroll.buttons) do
+            btn:SetScript("OnClick",function(self, button)
+                if IsControlKeyDown() then
+                    local isFavorite = C_PetJournal.PetIsFavorite(self.petID)
+                    C_PetJournal.SetFavorite(self.petID, isFavorite and 0 or 1)
+                else
+                    return PetJournalListItem_OnClick(self,button)
                 end
-                self.nmpBorder:Hide()
-            end
-        end)
-        hooksecurefunc("SpellBook_UpdateCompanionsFrame",function(ctype)
-            if ctype == "CRITTER" then NugMiniPet.UpdateBorders() end
-        end)
-        
+            end)
+        end
+
         NugMiniPet.Auto_Button = self:CreateCheckBox()
         NugMiniPet.Timer_EditBox = self:CreateTimerEditBox()
-        hooksecurefunc("SpellBookFrameTabButton_OnClick",function(self)
-            if SpellBookFrame.currentTab.bookType == BOOKTYPE_COMPANION then
+        hooksecurefunc("PetJournalParent_UpdateSelectedTab", function(self)
+            local selected = PanelTemplates_GetSelectedTab(self);
+            if selected == 2 then
                 NugMiniPet.Auto_Button:Show()
                 NugMiniPet.Timer_EditBox:Show()
             else
@@ -74,108 +55,72 @@ function NugMiniPet.ADDON_LOADED(self,event,arg1)
                 NugMiniPet.Timer_EditBox:ClearFocus()
                 NugMiniPet.Timer_EditBox:Hide()
             end
-            NugMiniPet:UpdateBorders()
         end)
-        
     end
 end
 
 function NugMiniPet.Summon()
     if not NugMiniPetDB.enable then return end
-    local creatureID, creatureName, spellID, icon, active
-    if id_now then creatureID, creatureName, spellID, icon, active = GetCompanionInfo("CRITTER", id_now) end
-    if not active then id_now = nil end
+    local active = C_PetJournal.GetSummonedPetID()
     local timerExpired
     if NugMiniPetDB.timer ~= 0 then
         if lastCall + NugMiniPetDB.timer * 60 < GetTime() then timerExpired = true end
     end
     if not active or timerExpired then
         if not initalized then NugMiniPet:Initialize() end
-        local id = NugMiniPet:Shuffle()
-        if id
+        local newPetID = NugMiniPet:Shuffle()
+        if newPetID == active then return end
+        if newPetID
             and (lastCall+1.5 < GetTime()) and not UnitAffectingCombat("player")
             and not IsMounted() and not IsFlying() and not UnitHasVehicleUI("player")
             and not IsStealthed() and not UnitIsGhost("player")
             and not UnitAura("player",GetSpellInfo(51755),nil,"HELPFUL") -- Camouflage
             and not UnitAura("player",GetSpellInfo(32612),nil,"HELPFUL") -- Invisibility
         then
-            lastCall = GetTime() -- isSummoned seems like not updated instantly so this is a cooldown for next summon
-            CallCompanion("CRITTER",id)
+            lastCall = GetTime()
+            C_PetJournal.SummonPetByID(newPetID)
         end
     end
 end
 
 function NugMiniPet.SimpleSummon()
     if not initalized then NugMiniPet:Initialize() end
-    local id = NugMiniPet:Shuffle()
-    while id_now ~= nil and id == id_now and select(2,NugMiniPet:Shuffle()) > 1 do
-        id = NugMiniPet:Shuffle()
-    end
+    local newPetID, maxfavs
+    local active = C_PetJournal.GetSummonedPetID()
+    repeat
+        newPetID, maxfavs = NugMiniPet:Shuffle()
+    until not active or newPetID ~= active or maxfavs < 2
+    if active == newPetID then return end
     lastCall = GetTime()
-    CallCompanion("CRITTER",id)
-end
-
-function NugMiniPet.UpdateBorders(self)
-    if SpellBookFrame.currentTab and SpellBookFrame.currentTab.bookType ~= BOOKTYPE_COMPANION then
-        for i=1,NUM_COMPANIONS_PER_PAGE do
-            local btn = _G["SpellBookCompanionButton"..i]
-            if btn.nmpBorder then btn.nmpBorder:Hide() end
-        end
-        return
-    end
-    local cPage,maxPage = SpellBook_GetCurrentPage()
-    local offset = (cPage -1) * NUM_COMPANIONS_PER_PAGE;
-    for i=1,NUM_COMPANIONS_PER_PAGE do
-        local btn = _G["SpellBookCompanionButton"..i]
-        local index = i + offset
-        if btn.creatureID then
-            if not btn.nmpBorder then NugMiniPet:CreateBorder(btn) end
-            local _,_, spellID = GetCompanionInfo("CRITTER",index)
-            if NugMiniPetDB.pets[spellID] then
-                btn.nmpBorder:Show()
-            else
-                btn.nmpBorder:Hide()
-            end
-        else
-            if btn.nmpBorder then btn.nmpBorder:Hide() end
-        end
-    end
+    C_PetJournal.SummonPetByID(newPetID)
 end
 
 function NugMiniPet.Initialize(self)
-    pet_indices = {}
-	for i=1,GetNumCompanions("CRITTER") do
-		local _,_, spellID, _, active = GetCompanionInfo("CRITTER", i)
-		if not spellID then break end
-		if NugMiniPetDB.pets[spellID] then 
-            table.insert(pet_indices, i)
-		end
-        if active then id_now = i end
-	end
-	self:UpdateBorders()
-end
-
-function NugMiniPet.CreateBorder(self,button)
-    local b = button:CreateTexture(nil,"OVERLAY")
-    b:SetWidth(20)
-    b:SetHeight(20)
-    b:SetPoint("TOPRIGHT",button,"BOTTOMLEFT",7,18)
-    b:SetTexture("Interface\\Buttons\\UI-GroupLoot-Dice-Down")
-    button.nmpBorder = b
+    table.wipe(favoritePetIDs)
+    local isWild = false
+    local index = 1
+    while true do
+	    local petID, speciesID, isOwned, customName, level, favorite,
+             isRevoked, name, icon, petType, creatureID, sourceText,
+             description, isWildPet, canBattle = C_PetJournal.GetPetInfoByIndex(index, isWild);
+        if not petID then break end
+        if favorite then table.insert(favoritePetIDs, petID) end
+        index = index + 1
+    end
 end
 
 function NugMiniPet.CreateCheckBox(self)
-    local f = CreateFrame("CheckButton",nil,SpellBookCompanionModelFrame,"UICheckButtonTemplate")
+    local f = CreateFrame("CheckButton",nil,PetJournal,"UICheckButtonTemplate")
     f:SetWidth(25)
     f:SetHeight(25)
-    f:SetPoint("BOTTOMLEFT",SpellBookCompanionModelFrame,"BOTTOMRIGHT",7,27)
+    f:SetPoint("BOTTOMLEFT",PetJournal,"BOTTOMLEFT",170,2)
     f:SetChecked(NugMiniPetDB.enable)
     f:SetScript("OnClick",function(self,button)
         NugMiniPetDB.enable = not NugMiniPetDB.enable
     end)
     f:SetScript("OnEnter",function(self)
         GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
-        GameTooltip:SetText("NugMiniPet\nEnable/Disable Autosummon\n\nCtrlClick : Select pet", nil, nil, nil, nil, 1);
+        GameTooltip:SetText("NugMiniPet\nEnable/Disable Autosummon\n\nCtrlClick : Mark as favorite", nil, nil, nil, nil, 1);
         GameTooltip:Show();
     end)
     f:SetScript("OnLeave",function(self)
@@ -183,7 +128,7 @@ function NugMiniPet.CreateCheckBox(self)
     end)
     
     local label  =  f:CreateFontString(nil, "OVERLAY")
-    label:SetFontObject("QuestFontNormalSmall")
+    label:SetFontObject("GameFontNormal")
     label:SetPoint("LEFT",f,"RIGHT",0,0)
     label:SetText("Auto")
     
@@ -191,13 +136,13 @@ function NugMiniPet.CreateCheckBox(self)
 end
 
 function NugMiniPet.CreateTimerEditBox()    
-    local f = CreateFrame("EditBox",nil,SpellBookCompanionModelFrame,"InputBoxTemplate")
+    local f = CreateFrame("EditBox",nil, PetJournal,"InputBoxTemplate")
     f:SetWidth(30)
     f:SetHeight(15)
     f:SetAutoFocus(false)
     f:SetMaxLetters(3)
     f:SetText(NugMiniPetDB.timer)
-    f:SetPoint("BOTTOMLEFT",SpellBookCompanionModelFrame,"BOTTOMRIGHT",15,5)
+    f:SetPoint("BOTTOMLEFT",PetJournal,"BOTTOMLEFT",250,6)
     f:SetScript("OnEnterPressed", function(self)
         if tonumber(self:GetText()) then
             NugMiniPetDB.timer = tonumber(self:GetText())
@@ -219,7 +164,7 @@ function NugMiniPet.CreateTimerEditBox()
     end)
     
     local label  =  f:CreateFontString(nil, "OVERLAY")
-    label:SetFontObject("QuestFontNormalSmall")
+    label:SetFontObject("GameFontNormal")
     label:SetPoint("LEFT",f,"RIGHT",1,0)
     label:SetText("m")
     
@@ -227,15 +172,14 @@ function NugMiniPet.CreateTimerEditBox()
 end
 
 function NugMiniPet.Shuffle(self)
-    local maxn = table.maxn(pet_indices)
+    local maxn = #favoritePetIDs
     local random
     if maxn == 1 then
-        random = pet_indices[1]
-        if id_now == random then random = nil end
+        random = favoritePetIDs[1]
     elseif maxn > 1 then
         repeat
-            random = pet_indices[math.random(maxn)]
-        until id_now ~= random
+            random = favoritePetIDs[math.random(maxn)]
+        until C_PetJournal.GetSummonedPetID() ~= random
     end
     return random, maxn
 end
