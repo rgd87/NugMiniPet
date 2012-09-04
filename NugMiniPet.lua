@@ -20,13 +20,17 @@ function NugMiniPet.ADDON_LOADED(self,event,arg1)
             table.wipe(NugMiniPetDB)
             NugMiniPetDB.DB_VERSION = DB_VERSION
         end
+        NugMiniPetDB.cfavs = NugMiniPetDB.cfavs or {}
+        if NugMiniPetDB.cfavs_enabled == nil then NugMiniPetDB.cfavs_enabled = false end
         NugMiniPetDB.timer = NugMiniPetDB.timer or 0
         NugMiniPetDB.enable = (NugMiniPetDB.enable == nil) and true or NugMiniPetDB.enable
-        
+
         lastCall = GetTime()
 
         self:RegisterEvent("PET_JOURNAL_LIST_UPDATE")
         self.PET_JOURNAL_LIST_UPDATE = self.Initialize
+
+        NugMiniPet:CFavsUpdate()
         
         hooksecurefunc("MoveForwardStart",NugMiniPet.Summon)
         hooksecurefunc("ToggleAutoRun",NugMiniPet.Summon)
@@ -43,15 +47,18 @@ function NugMiniPet.ADDON_LOADED(self,event,arg1)
             end)
         end
 
-        NugMiniPet.Auto_Button = self:CreateCheckBox()
+        NugMiniPet.Auto_Button = self:CreateAutoCheckBox()
+        NugMiniPet.CFavs_Button = self:CreateCfavsCheckBox()
         NugMiniPet.Timer_EditBox = self:CreateTimerEditBox()
         hooksecurefunc("PetJournalParent_UpdateSelectedTab", function(self)
             local selected = PanelTemplates_GetSelectedTab(self);
             if selected == 2 then
                 NugMiniPet.Auto_Button:Show()
+                NugMiniPet.CFavs_Button:Show()
                 NugMiniPet.Timer_EditBox:Show()
             else
                 NugMiniPet.Auto_Button:Hide()
+                NugMiniPet.CFavs_Button:Hide()
                 NugMiniPet.Timer_EditBox:ClearFocus()
                 NugMiniPet.Timer_EditBox:Hide()
             end
@@ -109,10 +116,25 @@ function NugMiniPet.Initialize(self)
     end
 end
 
-function NugMiniPet.CreateCheckBox(self)
+function NugMiniPet.CreateCheckBoxBase(self)
     local f = CreateFrame("CheckButton",nil,PetJournal,"UICheckButtonTemplate")
     f:SetWidth(25)
     f:SetHeight(25)
+
+    f:SetScript("OnLeave",function(self)
+        GameTooltip:Hide();
+    end)
+    
+    local label  =  f:CreateFontString(nil, "OVERLAY")
+    label:SetFontObject("GameFontNormal")
+    label:SetPoint("LEFT",f,"RIGHT",0,0)
+    
+    return f, label
+end
+
+function NugMiniPet.CreateAutoCheckBox(self)
+    local f, label = self:CreateCheckBoxBase()
+
     f:SetPoint("BOTTOMLEFT",PetJournal,"BOTTOMLEFT",170,2)
     f:SetChecked(NugMiniPetDB.enable)
     f:SetScript("OnClick",function(self,button)
@@ -123,16 +145,59 @@ function NugMiniPet.CreateCheckBox(self)
         GameTooltip:SetText("NugMiniPet\nEnable/Disable Autosummon\n\nCtrlClick : Mark as favorite", nil, nil, nil, nil, 1);
         GameTooltip:Show();
     end)
-    f:SetScript("OnLeave",function(self)
-        GameTooltip:Hide();
-    end)
-    
-    local label  =  f:CreateFontString(nil, "OVERLAY")
-    label:SetFontObject("GameFontNormal")
-    label:SetPoint("LEFT",f,"RIGHT",0,0)
     label:SetText("Auto")
-    
     return f
+end
+
+function NugMiniPet.CreateCfavsCheckBox(self)
+    local f, label = self:CreateCheckBoxBase()
+
+    f:SetPoint("BOTTOMLEFT",PetJournal,"BOTTOMLEFT",300,2)
+    f:SetChecked(NugMiniPetDB.cfavs_enabled)
+    f:SetScript("OnClick",function(self,button)
+        NugMiniPetDB.cfavs_enabled = not NugMiniPetDB.cfavs_enabled
+        NugMiniPet:CFavsUpdate()
+    end)
+    f:SetScript("OnEnter",function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
+        GameTooltip:SetText("Toggle character-specific favorites", nil, nil, nil, nil, 1);
+        GameTooltip:Show();
+    end)
+    label:SetText("Character favorites")
+    return f
+end
+
+function NugMiniPet.CFavsUpdate()
+    local enable = NugMiniPetDB.cfavs_enabled
+    if enable then
+        C_PetJournal.PetIsFavorite1 = C_PetJournal.PetIsFavorite1 or C_PetJournal.PetIsFavorite
+        C_PetJournal.SetFavorite1 = C_PetJournal.SetFavorite1 or C_PetJournal.SetFavorite
+        C_PetJournal.GetPetInfoByIndex1 = C_PetJournal.GetPetInfoByIndex1 or C_PetJournal.GetPetInfoByIndex
+        C_PetJournal.PetIsFavorite = function(petID)
+            return NugMiniPetDB.cfavs[petID] or false
+        end
+        C_PetJournal.SetFavorite = function(petID, new)
+            if new == 1 then
+                NugMiniPetDB.cfavs[petID] = true
+            else
+                NugMiniPetDB.cfavs[petID] = nil
+            end
+            if PetJournal then PetJournal_OnEvent(PetJournal, "PET_JOURNAL_LIST_UPDATE") end
+            NugMiniPet:PET_JOURNAL_LIST_UPDATE()
+        end
+        local gpi = C_PetJournal.GetPetInfoByIndex1
+        C_PetJournal.GetPetInfoByIndex = function(...)
+            local petID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle, arg1, arg2, arg3 = gpi(...)
+            favorite = C_PetJournal.PetIsFavorite(petID)
+            return petID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle, arg1, arg2, arg3
+        end
+    else
+        if C_PetJournal.PetIsFavorite1 then C_PetJournal.PetIsFavorite = C_PetJournal.PetIsFavorite1 end
+        if C_PetJournal.SetFavorite1 then C_PetJournal.SetFavorite = C_PetJournal.SetFavorite1 end
+        if C_PetJournal.GetPetInfoByIndex1 then C_PetJournal.GetPetInfoByIndex = C_PetJournal.GetPetInfoByIndex1 end
+    end
+    if PetJournal then PetJournal_OnEvent(PetJournal, "PET_JOURNAL_LIST_UPDATE") end
+    NugMiniPet:PET_JOURNAL_LIST_UPDATE()
 end
 
 function NugMiniPet.CreateTimerEditBox()    
