@@ -5,19 +5,23 @@ NugMiniPet:SetScript("OnEvent", function(self, event, ...)
 end)
 NugMiniPet:RegisterEvent("ADDON_LOADED")
 
-local DB_VERSION = 4
+local DB_VERSION = 5
 
 BINDING_HEADER_NUGMINIPET = "NugMiniPet"
 
 local lastCall
-local favoritePetIDs = {}
+local favoritePetGUIDs = {}
 local initalized = false
 function NugMiniPet.ADDON_LOADED(self,event,arg1)
     if arg1 == "NugMiniPet" then
         NugMiniPetDB = NugMiniPetDB or {}
         --PURGING OLD DB OF PETS
         if not NugMiniPetDB.DB_VERSION or NugMiniPetDB.DB_VERSION ~= DB_VERSION then
-            table.wipe(NugMiniPetDB)
+            if NugMiniPetDB.DB_VERSION == 4 and DB_VERSION == 5 then
+                if NugMiniPetDB.cfavs then table.wipe(NugMiniPetDB.cfavs) end
+            else
+                table.wipe(NugMiniPetDB)
+            end
             NugMiniPetDB.DB_VERSION = DB_VERSION
         end
         NugMiniPetDB.cfavs = NugMiniPetDB.cfavs or {}
@@ -39,8 +43,8 @@ function NugMiniPet.ADDON_LOADED(self,event,arg1)
         for i, btn in ipairs(PetJournal.listScroll.buttons) do
             btn:SetScript("OnClick",function(self, button)
                 if IsControlKeyDown() then
-                    local isFavorite = C_PetJournal.PetIsFavorite(self.petID)
-                    C_PetJournal.SetFavorite(self.petID, isFavorite and 0 or 1)
+                    local isFavorite = C_PetJournal.PetIsFavorite(self.petGUID)
+                    C_PetJournal.SetFavorite(self.petGUID, isFavorite and 0 or 1)
                 else
                     return PetJournalListItem_OnClick(self,button)
                 end
@@ -68,16 +72,16 @@ end
 
 function NugMiniPet.Summon()
     if not NugMiniPetDB.enable then return end
-    local active = C_PetJournal.GetSummonedPetID()
+    local active = C_PetJournal.GetSummonedPetGUID()
     local timerExpired
     if NugMiniPetDB.timer ~= 0 then
         if lastCall + NugMiniPetDB.timer * 60 < GetTime() then timerExpired = true end
     end
     if not active or timerExpired then
         if not initalized then NugMiniPet:Initialize() end
-        local newPetID = NugMiniPet:Shuffle()
-        if newPetID == active then return end
-        if newPetID
+        local newPetGUID = NugMiniPet:Shuffle()
+        if newPetGUID == active then return end
+        if newPetGUID
             and (lastCall+1.5 < GetTime()) and not UnitAffectingCombat("player")
             and not IsMounted() and not IsFlying() and not UnitHasVehicleUI("player")
             and not IsStealthed() and not UnitIsGhost("player")
@@ -85,33 +89,33 @@ function NugMiniPet.Summon()
             and not UnitAura("player",GetSpellInfo(32612),nil,"HELPFUL") -- Invisibility
         then
             lastCall = GetTime()
-            C_PetJournal.SummonPetByID(newPetID)
+            C_PetJournal.SummonPetByGUID(newPetGUID)
         end
     end
 end
 
 function NugMiniPet.SimpleSummon()
     if not initalized then NugMiniPet:Initialize() end
-    local newPetID, maxfavs
-    local active = C_PetJournal.GetSummonedPetID()
+    local newPetGUID, maxfavs
+    local active = C_PetJournal.GetSummonedPetGUID()
     repeat
-        newPetID, maxfavs = NugMiniPet:Shuffle()
-    until not active or newPetID ~= active or maxfavs < 2
-    if active == newPetID then return end
+        newPetGUID, maxfavs = NugMiniPet:Shuffle()
+    until not active or newPetGUID ~= active or maxfavs < 2
+    if active == newPetGUID then return end
     lastCall = GetTime()
-    C_PetJournal.SummonPetByID(newPetID)
+    C_PetJournal.SummonPetByGUID(newPetGUID)
 end
 
 function NugMiniPet.Initialize(self)
-    table.wipe(favoritePetIDs)
+    table.wipe(favoritePetGUIDs)
     local isWild = false
     local index = 1
     while true do
-	    local petID, speciesID, isOwned, customName, level, favorite,
+	    local petGUID, speciesID, isOwned, customName, level, favorite,
              isRevoked, name, icon, petType, creatureID, sourceText,
              description, isWildPet, canBattle = C_PetJournal.GetPetInfoByIndex(index, isWild);
-        if not petID then break end
-        if favorite then table.insert(favoritePetIDs, petID) end
+        if not petGUID then break end
+        if favorite then table.insert(favoritePetGUIDs, petGUID) end
         index = index + 1
     end
 end
@@ -173,23 +177,23 @@ function NugMiniPet.CFavsUpdate()
         C_PetJournal.PetIsFavorite1 = C_PetJournal.PetIsFavorite1 or C_PetJournal.PetIsFavorite
         C_PetJournal.SetFavorite1 = C_PetJournal.SetFavorite1 or C_PetJournal.SetFavorite
         C_PetJournal.GetPetInfoByIndex1 = C_PetJournal.GetPetInfoByIndex1 or C_PetJournal.GetPetInfoByIndex
-        C_PetJournal.PetIsFavorite = function(petID)
-            return NugMiniPetDB.cfavs[petID] or false
+        C_PetJournal.PetIsFavorite = function(petGUID)
+            return NugMiniPetDB.cfavs[petGUID] or false
         end
-        C_PetJournal.SetFavorite = function(petID, new)
+        C_PetJournal.SetFavorite = function(petGUID, new)
             if new == 1 then
-                NugMiniPetDB.cfavs[petID] = true
+                NugMiniPetDB.cfavs[petGUID] = true
             else
-                NugMiniPetDB.cfavs[petID] = nil
+                NugMiniPetDB.cfavs[petGUID] = nil
             end
             if PetJournal then PetJournal_OnEvent(PetJournal, "PET_JOURNAL_LIST_UPDATE") end
             NugMiniPet:PET_JOURNAL_LIST_UPDATE()
         end
         local gpi = C_PetJournal.GetPetInfoByIndex1
         C_PetJournal.GetPetInfoByIndex = function(...)
-            local petID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle, arg1, arg2, arg3 = gpi(...)
-            favorite = C_PetJournal.PetIsFavorite(petID)
-            return petID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle, arg1, arg2, arg3
+            local petGUID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle, arg1, arg2, arg3 = gpi(...)
+            favorite = C_PetJournal.PetIsFavorite(petGUID)
+            return petGUID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle, arg1, arg2, arg3
         end
     else
         if C_PetJournal.PetIsFavorite1 then C_PetJournal.PetIsFavorite = C_PetJournal.PetIsFavorite1 end
@@ -237,14 +241,14 @@ function NugMiniPet.CreateTimerEditBox()
 end
 
 function NugMiniPet.Shuffle(self)
-    local maxn = #favoritePetIDs
+    local maxn = #favoritePetGUIDs
     local random
     if maxn == 1 then
-        random = favoritePetIDs[1]
+        random = favoritePetGUIDs[1]
     elseif maxn > 1 then
         repeat
-            random = favoritePetIDs[math.random(maxn)]
-        until C_PetJournal.GetSummonedPetID() ~= random
+            random = favoritePetGUIDs[math.random(maxn)]
+        until C_PetJournal.GetSummonedPetGUID() ~= random
     end
     return random, maxn
 end
