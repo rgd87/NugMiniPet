@@ -43,8 +43,8 @@ function NugMiniPet.ADDON_LOADED(self,event,arg1)
         for i, btn in ipairs(PetJournal.listScroll.buttons) do
             btn:SetScript("OnClick",function(self, button)
                 if IsControlKeyDown() then
-                    local isFavorite = C_PetJournal.PetIsFavorite(self.petGUID)
-                    C_PetJournal.SetFavorite(self.petGUID, isFavorite and 0 or 1)
+                    local isFavorite = C_PetJournal.PetIsFavorite(self.petID)
+                    C_PetJournal.SetFavorite(self.petID, isFavorite and 0 or 1)
                 else
                     return PetJournalListItem_OnClick(self,button)
                 end
