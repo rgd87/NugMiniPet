@@ -1,2 +1,29 @@
 7.0.0:
  - Legion invisibility spellID fix
+
+6.0.0:
+ToC Update to 60000
+5.1.1:
+Fixed for API changes in 5.1
+Blizzard is now using petGUIDs instead of petIDs, hence 
+character-specific favorites has been reset to use new format.
+5.1: Character favorites
+5.0: MoP update. Thanks to petbattles api changes, addon is a lot more 
+reliable now.
+4.0: Cataclysm update. Also fixed bug when you can't summon if only one 
+pet selected
+1.4: Cleaned up, db format changed, various fixes
+1.3.2b (by Robsato): 
+Rebuilding summoning list after new pet is learned
+Does not try to summon a minipet anymore when flying or when in a 
+vehicle.
+1.3.2: Timer edit box now will hide when switching  from pets tab
+1.3.1: Bug when game freezes if only one pet selected fixed; Keybinding 
+for summon fixed
+1.3: Timer for chaning pets, pet database reworked, bug with ids when 
+new pet is learned should be fixed (not tested), now only CtrlClick to 
+select/deselect pet
+1.2: Borders and checkbox in pet frame, no need for console now
+1.1: +pet -pet removed, now addon only deals with pet IDs
+1.0.3: multilink +pet -pet
+1.0.2: added option to enable/disable addon
