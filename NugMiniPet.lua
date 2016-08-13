@@ -35,11 +35,11 @@ function NugMiniPet.ADDON_LOADED(self,event,arg1)
         self.PET_JOURNAL_LIST_UPDATE = self.Initialize
 
         NugMiniPet:CFavsUpdate()
-        
+
         hooksecurefunc("MoveForwardStart",NugMiniPet.Summon)
         hooksecurefunc("ToggleAutoRun",NugMiniPet.Summon)
-        
-    elseif arg1 == "Blizzard_PetJournal" then
+
+    elseif arg1 == "Blizzard_Collections" then
         for i, btn in ipairs(PetJournal.listScroll.buttons) do
             btn:SetScript("OnClick",function(self, button)
                 if IsControlKeyDown() then
@@ -54,7 +54,7 @@ function NugMiniPet.ADDON_LOADED(self,event,arg1)
         NugMiniPet.Auto_Button = self:CreateAutoCheckBox()
         NugMiniPet.CFavs_Button = self:CreateCfavsCheckBox()
         NugMiniPet.Timer_EditBox = self:CreateTimerEditBox()
-        hooksecurefunc("PetJournalParent_UpdateSelectedTab", function(self)
+        hooksecurefunc("CollectionsJournal_UpdateSelectedTab", function(self)
             local selected = PanelTemplates_GetSelectedTab(self);
             if selected == 2 then
                 NugMiniPet.Auto_Button:Show()
@@ -122,18 +122,18 @@ function NugMiniPet.Initialize(self)
 end
 
 function NugMiniPet.CreateCheckBoxBase(self)
-    local f = CreateFrame("CheckButton",nil,PetJournal,"UICheckButtonTemplate")
+    local f = CreateFrame("CheckButton", "NugMiniPetAutoCheckbox",PetJournal,"UICheckButtonTemplate")
     f:SetWidth(25)
     f:SetHeight(25)
 
     f:SetScript("OnLeave",function(self)
         GameTooltip:Hide();
     end)
-    
+
     local label  =  f:CreateFontString(nil, "OVERLAY")
     label:SetFontObject("GameFontNormal")
     label:SetPoint("LEFT",f,"RIGHT",0,0)
-    
+
     return f, label
 end
 
@@ -205,7 +205,7 @@ function NugMiniPet.CFavsUpdate()
     NugMiniPet:PET_JOURNAL_LIST_UPDATE()
 end
 
-function NugMiniPet.CreateTimerEditBox()    
+function NugMiniPet.CreateTimerEditBox()
     local f = CreateFrame("EditBox",nil, PetJournal,"InputBoxTemplate")
     f:SetWidth(30)
     f:SetHeight(15)
@@ -223,7 +223,7 @@ function NugMiniPet.CreateTimerEditBox()
         self:SetText(NugMiniPetDB.timer)
         self:ClearFocus()
     end)
-    
+
     f:SetScript("OnEnter",function(self)
         GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
         GameTooltip:SetText("Summon new pet every X minutes\n0 = Disabled", nil, nil, nil, nil, 1);
@@ -232,12 +232,12 @@ function NugMiniPet.CreateTimerEditBox()
     f:SetScript("OnLeave",function(self)
         GameTooltip:Hide();
     end)
-    
+
     local label  =  f:CreateFontString(nil, "OVERLAY")
     label:SetFontObject("GameFontNormal")
     label:SetPoint("LEFT",f,"RIGHT",1,0)
     label:SetText("m")
-    
+
     return f
 end
 
