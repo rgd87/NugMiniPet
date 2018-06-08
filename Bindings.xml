@@ -4,10 +4,10 @@
         if NugMiniPet.Auto_Button then NugMiniPet.Auto_Button:SetChecked(NugMiniPetDB.enable) end
         DEFAULT_CHAT_FRAME:AddMessage("Minipet autosummon "..(NugMiniPetDB.enable and "enabled" or "disabled"),0.7,0.7,1)
     </Binding>
-    <Binding name="Summon Random Pet" header="NUGMINIPET">
+    <Binding name="Summon Random Pet">
         NugMiniPet.SimpleSummon()
     </Binding>
-    <Binding name="Dismiss + Disable" header="NUGMINIPET">
+    <Binding name="Dismiss + Disable">
         C_PetJournal.SummonPetByID(C_PetJournal.GetSummonedPetID());
         NugMiniPetDB.enable = false
         if NugMiniPet.Auto_Button then NugMiniPet.Auto_Button:SetChecked(NugMiniPetDB.enable) end

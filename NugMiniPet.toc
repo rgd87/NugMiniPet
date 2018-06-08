@@ -1,4 +1,4 @@
-## Interface: 70000
+## Interface: 80000
 ## Title: NugMiniPet
 ## Notes: Minipet autosummon
 ## Author: d87

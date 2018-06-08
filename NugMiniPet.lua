@@ -70,6 +70,17 @@ function NugMiniPet.ADDON_LOADED(self,event,arg1)
     end
 end
 
+local function FindAura(unit, spellID, filter)
+    for i=1, 100 do
+        -- rank will be removed in bfa
+        local name, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, nameplateShowPersonal, auraSpellID = UnitAura(unit, i, filter)
+        if not name then return nil end
+        if spellID == auraSpellID then
+            return name, icon, count, debuffType, duration, expirationTime, unitCaster, canStealOrPurge, nameplateShowPersonal, auraSpellID
+        end
+    end
+end
+
 function NugMiniPet.Summon()
     if not NugMiniPetDB.enable then return end
     local active = C_PetJournal.GetSummonedPetGUID()
@@ -85,9 +96,9 @@ function NugMiniPet.Summon()
             and (lastCall+1.5 < GetTime()) and not UnitAffectingCombat("player")
             and not IsMounted() and not IsFlying() and not UnitHasVehicleUI("player")
             and not IsStealthed() and not UnitIsGhost("player")
-            and not UnitAura("player",GetSpellInfo(199483),nil,"HELPFUL") -- Camouflage
-            and not UnitAura("player",GetSpellInfo(32612),nil,"HELPFUL") -- Invisibility
-            and not UnitAura("player",GetSpellInfo(110960),nil,"HELPFUL") -- Geater Invisibility
+            and not FindAura("player",199483,"HELPFUL") -- Camouflage
+            and not FindAura("player",32612,"HELPFUL") -- Invisibility
+            and not FindAura("player",110960,"HELPFUL") -- Geater Invisibility
         then
             lastCall = GetTime()
             C_PetJournal.SummonPetByGUID(newPetGUID)
@@ -140,7 +151,7 @@ end
 function NugMiniPet.CreateAutoCheckBox(self)
     local f, label = self:CreateCheckBoxBase()
 
-    f:SetPoint("BOTTOMLEFT",PetJournal,"BOTTOMLEFT",170,2)
+    f:SetPoint("BOTTOMLEFT",PetJournal,"BOTTOMLEFT",290,1)
     f:SetChecked(NugMiniPetDB.enable)
     f:SetScript("OnClick",function(self,button)
         NugMiniPetDB.enable = not NugMiniPetDB.enable
@@ -157,7 +168,7 @@ end
 function NugMiniPet.CreateCfavsCheckBox(self)
     local f, label = self:CreateCheckBoxBase()
 
-    f:SetPoint("BOTTOMLEFT",PetJournal,"BOTTOMLEFT",300,2)
+    f:SetPoint("BOTTOMLEFT",PetJournal,"BOTTOMLEFT",400,1)
     f:SetChecked(NugMiniPetDB.cfavs_enabled)
     f:SetScript("OnClick",function(self,button)
         NugMiniPetDB.cfavs_enabled = not NugMiniPetDB.cfavs_enabled
@@ -212,7 +223,7 @@ function NugMiniPet.CreateTimerEditBox()
     f:SetAutoFocus(false)
     f:SetMaxLetters(3)
     f:SetText(NugMiniPetDB.timer)
-    f:SetPoint("BOTTOMLEFT",PetJournal,"BOTTOMLEFT",250,6)
+    f:SetPoint("BOTTOMLEFT",PetJournal,"BOTTOMLEFT",355,6)
     f:SetScript("OnEnterPressed", function(self)
         if tonumber(self:GetText()) then
             NugMiniPetDB.timer = tonumber(self:GetText())
