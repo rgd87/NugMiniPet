@@ -3,4 +3,8 @@
 ## Notes: Minipet autosummon
 ## Author: d87
 ## SavedVariablesPerCharacter: NugMiniPetDB
+## Version: @project-version@
+
+## X-WoWI-ID: 11133
+
 NugMiniPet.lua

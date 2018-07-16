@@ -1,3 +1,8 @@
 package-as: NugMiniPet
 
-manual-changelog: CHANGELOG
+enable-nolib-creation: no
+
+manual-changelog:
+  filename: CHANGELOG
+  markup-type: markdown
+
