@@ -8,6 +8,9 @@ NugMiniPet:RegisterEvent("ADDON_LOADED")
 local DB_VERSION = 5
 
 BINDING_HEADER_NUGMINIPET = "NugMiniPet"
+BINDING_NAME_NUGMINIPETTOGGLE = "Toggle Autosummon"
+BINDING_NAME_NUGMINIPETRANDOMPET = "Summon Random Pet"
+BINDING_NAME_NUGMINIPETDISABLE = "Dismiss and Disable"
 
 local lastCall
 local favoritePetGUIDs = {}

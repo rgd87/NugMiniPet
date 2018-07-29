@@ -1,13 +1,13 @@
 <Bindings>
-	<Binding name="Toggle Autosummon" header="NUGMINIPET">
+	<Binding name="NUGMINIPETTOGGLE" header="NUGMINIPET" category="ADDONS">
         NugMiniPetDB.enable = not NugMiniPetDB.enable
         if NugMiniPet.Auto_Button then NugMiniPet.Auto_Button:SetChecked(NugMiniPetDB.enable) end
         DEFAULT_CHAT_FRAME:AddMessage("Minipet autosummon "..(NugMiniPetDB.enable and "enabled" or "disabled"),0.7,0.7,1)
     </Binding>
-    <Binding name="Summon Random Pet">
+    <Binding name="NUGMINIPETRANDOMPET" category="ADDONS">
         NugMiniPet.SimpleSummon()
     </Binding>
-    <Binding name="Dismiss + Disable">
+    <Binding name="NUGMINIPETDISABLE" category="ADDONS">
         C_PetJournal.SummonPetByID(C_PetJournal.GetSummonedPetID());
         NugMiniPetDB.enable = false
         if NugMiniPet.Auto_Button then NugMiniPet.Auto_Button:SetChecked(NugMiniPetDB.enable) end
