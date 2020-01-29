@@ -6,5 +6,6 @@
 ## Version: @project-version@
 
 ## X-WoWI-ID: 11133
+## X-Curse-Project-ID: 44241
 
 NugMiniPet.lua
