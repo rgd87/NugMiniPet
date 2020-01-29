@@ -121,6 +121,22 @@ function NugMiniPet.SimpleSummon()
     C_PetJournal.SummonPetByGUID(newPetGUID)
 end
 
+function NugMiniPet:Toggle()
+    NugMiniPetDB.enable = not NugMiniPetDB.enable
+    if NugMiniPet.Auto_Button then NugMiniPet.Auto_Button:SetChecked(NugMiniPetDB.enable) end
+    DEFAULT_CHAT_FRAME:AddMessage("Minipet autosummon "..(NugMiniPetDB.enable and "enabled" or "disabled"),0.7,0.7,1)
+end
+
+function NugMiniPet:DismissAndDisable()
+    local activePetGUID = C_PetJournal.GetSummonedPetGUID()
+    if activePetGUID then
+        C_PetJournal.SummonPetByGUID(activePetGUID);
+    end
+    NugMiniPetDB.enable = false
+    if NugMiniPet.Auto_Button then NugMiniPet.Auto_Button:SetChecked(NugMiniPetDB.enable) end
+    DEFAULT_CHAT_FRAME:AddMessage("Minipet autosummon "..(NugMiniPetDB.enable and "enabled" or "disabled"),0.7,0.7,1)
+end
+
 function NugMiniPet.Initialize(self)
     table.wipe(favoritePetGUIDs)
     local isWild = false
