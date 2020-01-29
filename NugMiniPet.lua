@@ -98,6 +98,7 @@ function NugMiniPet.Summon()
         if newPetGUID
             and (lastCall+1.5 < GetTime()) and not UnitAffectingCombat("player")
             and not IsMounted() and not IsFlying() and not UnitHasVehicleUI("player")
+            and not UnitIsControlling("player") -- If player is mind-controlling
             and not IsStealthed() and not UnitIsGhost("player")
             and not FindAura("player",199483,"HELPFUL") -- Camouflage
             and not FindAura("player",32612,"HELPFUL") -- Invisibility
