@@ -1,3 +1,9 @@
+### 8.3.1:
+
+- Fixed the bug with Mayhem Mind Melder
+- Fixed 'Dismiss and disable' Keybind
+- Updated TOC for 8.3
+
 ### 8.0.1:
 
 - BfA fix for UnitAura
@@ -17,7 +23,7 @@
 ### 5.1.1:
 
 - Fixed for API changes in 5.1
-- Blizzard is now using petGUIDs instead of petIDs, hence 
+- Blizzard is now using petGUIDs instead of petIDs, hence
 - character-specific favorites has been reset to use new format.
 
 ### 5.1:
@@ -35,7 +41,7 @@
 
 - Cleaned up, db format changed, various fixes
 
-### 1.3.2b (by Robsato): 
+### 1.3.2b (by Robsato):
 
 - Rebuilding summoning list after new pet is learned
 - Does not try to summon a minipet anymore when flying or when in a vehicle.
