@@ -224,8 +224,8 @@ function NugMiniPet.CFavsUpdate()
         local gpi = C_PetJournal.GetPetInfoByIndex1
         C_PetJournal.GetPetInfoByIndex = function(...)
             local petGUID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle, arg1, arg2, arg3 = gpi(...)
-            favorite = C_PetJournal.PetIsFavorite(petGUID)
-            return petGUID, speciesID, isOwned, customName, level, favorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle, arg1, arg2, arg3
+            local customFavorite = C_PetJournal.PetIsFavorite(petGUID)
+            return petGUID, speciesID, isOwned, customName, level, customFavorite, isRevoked, name, icon, petType, creatureID, sourceText, description, isWildPet, canBattle, arg1, arg2, arg3
         end
     else
         if C_PetJournal.PetIsFavorite1 then C_PetJournal.PetIsFavorite = C_PetJournal.PetIsFavorite1 end
