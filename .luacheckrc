@@ -109,4 +109,5 @@ globals = {
     "IsStealthed",
     "UnitIsGhost",
     "PetJournal_OnEvent",
+    "UnitChannelInfo",
 }
