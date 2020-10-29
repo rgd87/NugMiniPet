@@ -39,8 +39,10 @@ function NugMiniPet.ADDON_LOADED(self,event,arg1)
 
         NugMiniPet:CFavsUpdate()
 
-        hooksecurefunc("MoveForwardStart",NugMiniPet.Summon)
-        hooksecurefunc("ToggleAutoRun",NugMiniPet.Summon)
+        self:RegisterEvent("PLAYER_STARTED_MOVING")
+        self.PLAYER_STARTED_MOVING = NugMiniPet.Summon
+        -- hooksecurefunc("MoveForwardStart",NugMiniPet.Summon)
+        -- hooksecurefunc("ToggleAutoRun",NugMiniPet.Summon)
 
     elseif arg1 == "Blizzard_Collections" then
         for i, btn in ipairs(PetJournal.listScroll.buttons) do
