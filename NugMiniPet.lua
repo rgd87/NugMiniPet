@@ -86,6 +86,17 @@ local function FindAura(unit, spellID, filter)
     end
 end
 
+local function InMythicKeystone()
+    local name, instanceType, difficultyID = GetInstanceInfo()
+    return instanceType == "party" and difficultyID == 8
+end
+
+local function InArena()
+    local name, instanceType, difficultyID = GetInstanceInfo()
+    return instanceType == "arena"
+end
+
+
 function NugMiniPet.Summon()
     if not NugMiniPetDB.enable then return end
     local active = C_PetJournal.GetSummonedPetGUID()
@@ -105,6 +116,8 @@ function NugMiniPet.Summon()
             and not FindAura("player",199483,"HELPFUL") -- Camouflage
             and not FindAura("player",32612,"HELPFUL") -- Invisibility
             and not FindAura("player",110960,"HELPFUL") -- Geater Invisibility
+            and not InMythicKeystone()
+            and not InArena()
         then
             lastCall = GetTime()
             C_PetJournal.SummonPetByGUID(newPetGUID)

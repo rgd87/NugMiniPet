@@ -110,4 +110,5 @@ globals = {
     "UnitIsGhost",
     "PetJournal_OnEvent",
     "UnitChannelInfo",
+    "GetInstanceInfo",
 }
