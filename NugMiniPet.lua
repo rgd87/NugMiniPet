@@ -116,6 +116,7 @@ function NugMiniPet.Summon()
             and not FindAura("player",199483,"HELPFUL") -- Camouflage
             and not FindAura("player",32612,"HELPFUL") -- Invisibility
             and not FindAura("player",110960,"HELPFUL") -- Geater Invisibility
+            and not FindAura("player",311796,"HELPFUL") -- Daisy
             and not InMythicKeystone()
             and not InArena()
         then
