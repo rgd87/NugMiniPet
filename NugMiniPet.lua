@@ -45,7 +45,7 @@ function NugMiniPet.ADDON_LOADED(self,event,arg1)
         -- hooksecurefunc("ToggleAutoRun",NugMiniPet.Summon)
 
     elseif arg1 == "Blizzard_Collections" then
-        for i, btn in ipairs(PetJournal.listScroll.buttons) do
+        for i, btn in ipairs(PetJournal.ScrollBox.ScrollTarget) do
             btn:SetScript("OnClick",function(self, button)
                 if IsControlKeyDown() then
                     local isFavorite = C_PetJournal.PetIsFavorite(self.petID)
